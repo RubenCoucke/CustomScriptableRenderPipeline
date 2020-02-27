@@ -92,7 +92,7 @@ void GetBuiltinDataDebug(uint paramId, BuiltinData builtinData, PositionInputs p
         uint layerId = 0, layerCount = countbits(lightLayers);
 
         result = float3(0, 0, 0);
-        for (uint i = 0; i < 8; i++)
+        for (uint i = 0; (i < 8) && (layerId < layerCount); i++)
         {
             if (lightLayers & (1 << i))
             {

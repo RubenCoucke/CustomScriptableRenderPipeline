@@ -514,6 +514,7 @@ namespace UnityEngine.Rendering.HighDefinition
             if (value)
             {
                 data.ResetExclusiveEnumIndices();
+                data.lightingDebugSettings.debugLightFilterMode = DebugLightFilterMode.None;
 
                 var builtins = typeof(Builtin.BuiltinData);
                 var attr = builtins.GetCustomAttributes(true)[0] as GenerateHLSL;

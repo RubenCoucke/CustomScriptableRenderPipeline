@@ -118,8 +118,9 @@ The **Lighting** panel has tools that you can use to visualize various component
 | **Hierarchy Debug Mode**             | Use the drop-down to select a light type to show the direct lighting for or a Reflection Probe type to show the indirect lighting for. |
 | **Light Layers Visualization**       | Enable the checkbox to visualize light layers of objects in your Scene. |
 | **- Use Selected Light**             | Enable the checkbox to visualize objects affected by the selected light. |
-| **- Match Light's Shadow Layers**    | Enable the checkbox to visualize objects casting shadows for the selected light. |
+| **- Switch to Light's Shadow Layers**| Enable the checkbox to visualize objects casting shadows for the selected light. |
 | **- Filter Layers**                  | Use the drop-down to filter light layers that you want to visialize. Objects having a matching layer will be displayed in a specific color. |
+| **- Layers Color**                   | Use the color pickers to select the display color of each light layer. |
 
 | **Material Override**                | **Description**                                              |
 | ------------------------------------ | ------------------------------------------------------------ |
