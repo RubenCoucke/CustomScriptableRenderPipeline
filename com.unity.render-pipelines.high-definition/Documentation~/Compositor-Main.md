@@ -22,11 +22,11 @@ For a high level overview of the Compositor's functionality please refer to the 
 ## Composition example
 
 The following example uses the Compositor to render a watermark on top of a Unity Scene.
-![](Images/Compositor/HDRPTemplateWithLogo.png)
+![](Images/Compositor-HDRPTemplateWithLogo.png)
 
 *The result.*
 
 
-![](Images/Compositor/CompositorSimpleGraph.png)
+![](Images/Compositor-CompositorSimpleGraph.png)
 
 *The composition graph for the watermark example:*

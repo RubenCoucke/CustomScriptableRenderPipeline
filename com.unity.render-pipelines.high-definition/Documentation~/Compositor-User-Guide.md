@@ -19,7 +19,7 @@ When you create a Composition Graph, there are two main types of input property 
 
 The following graph contains examples of the property types described above. The **Logo** property is an example of a Composition Layer and the **Opacity** property is an example of an input property to control an aspect of the composition:
 
-![](Images/Compositor/CompositorSimpleGraph.png)
+![](Images/Compositor-CompositorSimpleGraph.png)
 
 Unity saves the Compositor settings in a .asset file with the same name as the Composition Graph. When the Compositor loads a Composition Graph, it also loads the settings from the corresponding Asset file if one exists, otherwise, it creates a new Asset with default settings.
 
