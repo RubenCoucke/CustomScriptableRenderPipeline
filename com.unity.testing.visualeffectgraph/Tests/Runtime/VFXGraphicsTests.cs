@@ -51,6 +51,7 @@ namespace UnityEngine.VFX.Test
         public IEnumerator Run(GraphicsTestCase testCase)
         {
 #if UNITY_EDITOR
+            Debug.Log("while (SceneView.sceneViews.Count > 0)");
             while (SceneView.sceneViews.Count > 0)
             {
                 var sceneView = SceneView.sceneViews[0] as SceneView;
@@ -58,7 +59,7 @@ namespace UnityEngine.VFX.Test
             }
 #endif
             SceneManagement.SceneManager.LoadScene(testCase.ScenePath);
-
+            Debug.Log("Always wait one frame for scene load");
             // Always wait one frame for scene load
             yield return null;
 
@@ -108,6 +109,7 @@ namespace UnityEngine.VFX.Test
                         continue; //could occurs if VisualEffectAsset is in AssetBundle
                     var fnGetOrCreate = visualEffectAssetExt.GetMethod("GetOrCreateGraph");
                     var graph = fnGetOrCreate.Invoke(null, new object[] { resource }) as VFXGraph;
+                    Debug.Log("graph.RecompileIfNeeded();");
                     graph.RecompileIfNeeded();
                 }
 #endif
@@ -115,6 +117,7 @@ namespace UnityEngine.VFX.Test
                 var rt = RenderTexture.GetTemporary(captureSizeWidth, captureSizeHeight, 24);
                 camera.targetTexture = rt;
 
+                Debug.Log("foreach (var component in vfxComponents)");
                 foreach (var component in vfxComponents)
                 {
                     component.Reinit();
@@ -123,6 +126,7 @@ namespace UnityEngine.VFX.Test
 #if UNITY_EDITOR
                 //When we change the graph, if animator was already enable, we should reinitialize animator to force all BindValues
                 var animators = Resources.FindObjectsOfTypeAll<Animator>();
+                Debug.Log("foreach (var animator in animators)");
                 foreach (var animator in animators)
                 {
                     animator.Rebind();
@@ -142,8 +146,10 @@ namespace UnityEngine.VFX.Test
                 int waitFrameCount = (int)(simulateTime / frequency);
                 int startFrameIndex = Time.frameCount;
                 int expectedFrameIndex = startFrameIndex + waitFrameCount;
+                Debug.Log("while (Time.frameCount != expectedFrameIndex)");
                 while (Time.frameCount != expectedFrameIndex)
                 {
+                    Debug.Log("Frame : " + Time.frameCount);
                     yield return null;
 #if UNITY_EDITOR
                     foreach (var audioSource in audioSources)
@@ -158,8 +164,10 @@ namespace UnityEngine.VFX.Test
                     camera.targetTexture = null;
                     actual = new Texture2D(captureSizeWidth, captureSizeHeight, TextureFormat.RGB24, false);
                     RenderTexture.active = rt;
+                    Debug.Log("actual.ReadPixels");
                     actual.ReadPixels(new Rect(0, 0, captureSizeWidth, captureSizeHeight), 0, 0);
                     RenderTexture.active = null;
+                    Debug.Log("actual.Apply()");
                     actual.Apply();
 
                     var imageComparisonSettings = new ImageComparisonSettings() { AverageCorrectnessThreshold = 5e-4f };
@@ -171,6 +179,7 @@ namespace UnityEngine.VFX.Test
                     if (!ExcludedTestsButKeepLoadScene.Any(o => testCase.ScenePath.Contains(o)) &&
                         !(SystemInfo.graphicsDeviceType == GraphicsDeviceType.Metal && UnstableMetalTests.Any(o => testCase.ScenePath.Contains(o))))
                     {
+                        Debug.Log("ImageAssert.AreEqual");
                         ImageAssert.AreEqual(testCase.ReferenceImage, actual, imageComparisonSettings);
                     }
                     else
@@ -185,6 +194,7 @@ namespace UnityEngine.VFX.Test
                         UnityEngine.Object.Destroy(actual);
                 }
             }
+            Debug.Log("End !!");
         }
 
         [TearDown]
