@@ -20,7 +20,7 @@
                 "TEXCOORD3", subscriptOptions : StructFieldOptions.Optional);
             public static FieldDescriptor weights = new FieldDescriptor(Attributes.name, "weights", "ATTRIBUTES_NEED_BLENDWEIGHTS", ShaderValueType.Float4,
                 "BLENDWEIGHTS", subscriptOptions : StructFieldOptions.Optional);
-            public static FieldDescriptor indicies = new FieldDescriptor(Attributes.name, "indicies", "ATTRIBUTES_NEED_BLENDINDICES", ShaderValueType.Uint4,
+            public static FieldDescriptor indices = new FieldDescriptor(Attributes.name, "indices", "ATTRIBUTES_NEED_BLENDINDICES", ShaderValueType.Uint4,
                 "BLENDINDICES", subscriptOptions : StructFieldOptions.Optional);
             public static FieldDescriptor color = new FieldDescriptor(Attributes.name, "color", "ATTRIBUTES_NEED_COLOR", ShaderValueType.Float4,
                 "COLOR", subscriptOptions : StructFieldOptions.Optional);
@@ -31,7 +31,7 @@
         public struct Varyings
         {
             public static string name = "Varyings";
-            public static FieldDescriptor positionCS = new FieldDescriptor(Varyings.name, "positionCS", "", ShaderValueType.Float4, "Sv_Position");
+            public static FieldDescriptor positionCS = new FieldDescriptor(Varyings.name, "positionCS", "", ShaderValueType.Float4, "SV_POSITION");
             public static FieldDescriptor positionWS = new FieldDescriptor(Varyings.name, "positionWS", "VARYINGS_NEED_POSITION_WS", ShaderValueType.Float3,
                 subscriptOptions : StructFieldOptions.Optional);
             public static FieldDescriptor normalWS = new FieldDescriptor(Varyings.name, "normalWS", "VARYINGS_NEED_NORMAL_WS", ShaderValueType.Float3,
@@ -49,8 +49,6 @@
             public static FieldDescriptor color = new FieldDescriptor(Varyings.name, "color", "VARYINGS_NEED_COLOR", ShaderValueType.Float4,
                 subscriptOptions : StructFieldOptions.Optional);
             public static FieldDescriptor viewDirectionWS = new FieldDescriptor(Varyings.name, "viewDirectionWS", "VARYINGS_NEED_VIEWDIRECTION_WS", ShaderValueType.Float3,
-                subscriptOptions : StructFieldOptions.Optional);
-            public static FieldDescriptor bitangentWS = new FieldDescriptor(Varyings.name, "bitangentWS", "VARYINGS_NEED_BITANGENT_WS", ShaderValueType.Float3,
                 subscriptOptions : StructFieldOptions.Optional);
             public static FieldDescriptor screenPosition = new FieldDescriptor(Varyings.name, "screenPosition", "VARYINGS_NEED_SCREENPOSITION", ShaderValueType.Float4,
                 subscriptOptions : StructFieldOptions.Optional);
@@ -128,7 +126,7 @@
             public static FieldDescriptor BoneWeights = new FieldDescriptor(VertexDescriptionInputs.name, "BoneWeights", "", ShaderValueType.Float4,
                 subscriptOptions : StructFieldOptions.Optional);
 
-            public static FieldDescriptor BoneIndicies = new FieldDescriptor(VertexDescriptionInputs.name, "BoneIndicies", "", ShaderValueType.Uint4,
+            public static FieldDescriptor BoneIndices = new FieldDescriptor(VertexDescriptionInputs.name, "BoneIndices", "", ShaderValueType.Uint4,
                 subscriptOptions : StructFieldOptions.Optional);
         }
 

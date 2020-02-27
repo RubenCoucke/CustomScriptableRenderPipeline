@@ -1,8 +1,8 @@
 Pass
 {
     $splice(PassName)
-    Tags 
-    { 
+    Tags
+    {
         $splice(LightMode)
     }
 
@@ -11,7 +11,7 @@ Pass
 
     // Debug
     $splice(Debug)
-    
+
     // --------------------------------------------------
     // Pass
 
@@ -26,7 +26,6 @@ Pass
 
     // Defines
     $Material.KajiyaKay:                #define _MATERIAL_FEATURE_HAIR_KAJIYA_KAY 1
-    $AlphaFog:                          #define _ENABLE_FOG_ON_TRANSPARENT 1
     $Occlusion:                         #define _OCCLUSION 1
     $SpecularOcclusionFromAO:           #define _SPECULAR_OCCLUSION_FROM_AO 1
     $SpecularOcclusionFromAOBentNormal: #define _SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL 1
@@ -35,7 +34,7 @@ Pass
     $DisableDecals:                     #define _DISABLE_DECALS 1
     $DisableSSR:                        #define _DISABLE_SSR 1
     $AddPrecomputedVelocity:            #define _ADD_PRECOMPUTED_VELOCITY
-    $TransparentWritesMotionVec:        #define _WRITE_TRANSPARENT_MOTION_VECTOR 1
+    $TransparentWritesMotionVec:        #define _TRANSPARENT_WRITES_MOTION_VEC 1
     $DepthOffset:                       #define _DEPTHOFFSET_ON 1
     $UseLightFacingNormal:              #define _USE_LIGHT_FACING_NORMAL 1
     $BlendMode.PreserveSpecular:        #define _BLENDMODE_PRESERVE_SPECULAR_LIGHTING 1
@@ -70,10 +69,15 @@ Pass
             #endif
         #endif
     #endif
-    
+
     // We need isFontFace when using double sided
     #if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
         #define VARYINGS_NEED_CULLFACE
+    #endif
+
+    //translate transparent motion vector define
+    #if defined(_TRANSPARENT_WRITES_MOTION_VEC) && defined(_SURFACE_TYPE_TRANSPARENT)
+        #define _WRITE_TRANSPARENT_MOTION_VECTOR
     #endif
 
     // Dots Instancing
@@ -105,7 +109,7 @@ Pass
 
     // Graph Vertex
     $splice(GraphVertex)
-    
+
     // Graph Pixel
     $splice(GraphPixel)
 
@@ -165,7 +169,7 @@ Pass
         $SurfaceDescription.SecondarySmoothness:            surfaceData.secondaryPerceptualSmoothness = surfaceDescription.SecondarySmoothness;
         $SurfaceDescription.SecondarySpecularTint:          surfaceData.secondarySpecularTint =         surfaceDescription.SecondarySpecularTint;
         $SurfaceDescription.SecondarySpecularShift:         surfaceData.secondarySpecularShift =        surfaceDescription.SecondarySpecularShift;
-     
+
         // These static material feature allow compile time optimization
         surfaceData.materialFeatures = 0;
 
@@ -271,8 +275,7 @@ Pass
     void GetSurfaceAndBuiltinData(FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
     {
         #ifdef LOD_FADE_CROSSFADE // enable dithering LOD transition if user select CrossFade transition in LOD group
-            uint3 fadeMaskSeed = asuint((int3)(V * _ScreenSize.xyx)); // Quantize V to _ScreenSize values
-            LODDitheringTransition(fadeMaskSeed, unity_LODFade.x);
+            LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
         #endif
 
         #ifdef _DOUBLESIDED_ON
@@ -288,18 +291,20 @@ Pass
 
         // Perform alpha test very early to save performance (a killed pixel will not sample textures)
         // TODO: split graph evaluation to grab just alpha dependencies first? tricky..
-        $AlphaTest:         DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold);
-        $AlphaTestPrepass:  DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdDepthPrepass);
-        $AlphaTestPostpass: DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdDepthPostpass);
-        $AlphaTestShadow:   DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow);
+        #ifdef _ALPHATEST_ON
+            $AlphaTest:         DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold);
+            $AlphaTestPrepass:  DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdDepthPrepass);
+            $AlphaTestPostpass: DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdDepthPostpass);
+            $AlphaTestShadow:   DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow);
+        #endif
 
         $DepthOffset: ApplyDepthOffsetPositionInput(V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput);
 
         float3 bentNormalWS;
         BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS);
-    
+
         // Builtin Data
-        // For back lighting we use the oposite vertex normal 
+        // For back lighting we use the oposite vertex normal
         InitBuiltinData(posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[2], fragInputs.texCoord1, fragInputs.texCoord2, builtinData);
 
         // override sampleBakedGI:

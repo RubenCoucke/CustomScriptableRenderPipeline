@@ -434,22 +434,22 @@ namespace UnityEditor.ShaderGraph
                                                                                                                 activeFields.Contains(Fields.GraphVertex)),
 
                 new ConditionalField(StructFields.VertexDescriptionInputs.BoneWeights,              requirements.requiresVertexSkinning),
-                new ConditionalField(StructFields.VertexDescriptionInputs.BoneIndicies,             requirements.requiresVertexSkinning),
+                new ConditionalField(StructFields.VertexDescriptionInputs.BoneIndices,              requirements.requiresVertexSkinning),
             };
         }
 
-        internal static void AddRequiredFields(FieldDescriptor[] passRequiredFields,IActiveFieldsSet activeFields)
+        internal static void AddRequiredFields(FieldCollection passRequiredFields,IActiveFieldsSet activeFields)
         {
             if (passRequiredFields != null)
             {
-                foreach (var requiredField in passRequiredFields)
+                foreach (FieldCollection.Item requiredField in passRequiredFields)
                 {
-                    activeFields.AddAll(requiredField);
+                    activeFields.AddAll(requiredField.field);
                 }
             }
         }
 
-        internal static void ApplyFieldDependencies(IActiveFields activeFields, FieldDependency[] dependencies)
+        internal static void ApplyFieldDependencies(IActiveFields activeFields, DependencyCollection dependencies)
         {
             // add active fields to queue
             Queue<FieldDescriptor> fieldsToPropagate = new Queue<FieldDescriptor>();
@@ -468,11 +468,11 @@ namespace UnityEditor.ShaderGraph
                         return;
                         
                     // find all dependencies of field that are not already active
-                    foreach (FieldDependency d in dependencies.Where(d => (d.field == field) && !activeFields.Contains(d.dependsOn)))
+                    foreach (DependencyCollection.Item d in dependencies.Where(d => (d.dependency.field == field) && !activeFields.Contains(d.dependency.dependsOn)))
                     {
                         // activate them and add them to the queue
-                        activeFields.Add(d.dependsOn);
-                        fieldsToPropagate.Enqueue(d.dependsOn);
+                        activeFields.Add(d.dependency.dependsOn);
+                        fieldsToPropagate.Enqueue(d.dependency.dependsOn);
                     }
                 }
             }

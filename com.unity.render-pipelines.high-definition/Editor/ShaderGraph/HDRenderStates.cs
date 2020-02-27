@@ -61,6 +61,7 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
 
         public static RenderStateCollection ShadowCasterPBR = new RenderStateCollection
         {
+            { RenderState.Cull(Cull.Off), new FieldCondition(Fields.DoubleSided, true) },
             { RenderState.Blend(Blend.One, Blend.Zero) },
             { RenderState.ZWrite(ZWrite.On) },
             { RenderState.ColorMask("ColorMask 0") },
@@ -150,11 +151,12 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
 
         public static RenderStateCollection DepthOnly = new RenderStateCollection
         {
+            { RenderState.Cull(Cull.Off), new FieldCondition(Fields.DoubleSided, true) },
             { RenderState.ZWrite(ZWrite.On) },
             { RenderState.Stencil(new StencilDescriptor()
             {
-                WriteMask = $"{(int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer | (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR}",
-                Ref = "0",
+                WriteMask = $"{ 0 | (int)StencilUsage.TraceReflectionRay}",
+                Ref = $"{0 | (int)StencilUsage.TraceReflectionRay}",
                 Comp = "Always",
                 Pass = "Replace",
             }) },
@@ -198,8 +200,8 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             { RenderState.ColorMask("ColorMask 0 1") },
             { RenderState.Stencil(new StencilDescriptor()
             {
-                WriteMask = $"{(int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors}",
-                Ref = $"{(int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors}",
+                WriteMask = $"{(int)StencilUsage.ObjectMotionVector}",
+                Ref = $"{(int)StencilUsage.ObjectMotionVector}",
                 Comp = "Always",
                 Pass = "Replace",
             }) },
@@ -208,13 +210,10 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
         public static RenderStateCollection PBRMotionVectors = new RenderStateCollection
         {
             { RenderState.Cull(Cull.Off), new FieldCondition(Fields.DoubleSided, true) },
-            { RenderState.Blend(Blend.One, Blend.Zero) },
-            { RenderState.ZWrite(ZWrite.On) },
-            { RenderState.ColorMask("ColorMask 0") },
             { RenderState.Stencil(new StencilDescriptor()
             {
-                WriteMask = $"{(int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer | (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR | (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors}",
-                Ref = $"{(int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors}",
+                WriteMask = $"{0 | (int)StencilUsage.TraceReflectionRay | (int)StencilUsage.ObjectMotionVector}",
+                Ref = $"{ 0 | (int)StencilUsage.TraceReflectionRay | (int)StencilUsage.ObjectMotionVector}",
                 Comp = "Always",
                 Pass = "Replace",
             }) },
@@ -285,8 +284,8 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             { RenderState.ZWrite(ZWrite.Off), new FieldCondition(Fields.SurfaceTransparent, true) },
             { RenderState.Stencil(new StencilDescriptor()
             {
-                WriteMask = $"{(int)HDRenderPipeline.StencilBitMask.LightingMask}",
-                Ref = $"{(int)StencilLightingUsage.NoLighting}",
+                WriteMask = $"{(int)StencilUsage.RequiresDeferredLighting | (int)StencilUsage.SubsurfaceScattering}",
+                Ref = $"{(int)StencilUsage.Clear}",
                 Comp = "Always",
                 Pass = "Replace",
             }) },
@@ -314,8 +313,8 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 new FieldCondition(Fields.AlphaTest, true) } },
             { RenderState.Stencil(new StencilDescriptor()
             {
-                WriteMask = $"{(int)HDRenderPipeline.StencilBitMask.LightingMask}",
-                Ref = $"{(int)StencilLightingUsage.NoLighting}",
+                WriteMask = $"{(int)StencilUsage.RequiresDeferredLighting | (int)StencilUsage.SubsurfaceScattering}",
+                Ref = $"{(int)StencilUsage.Clear}",
                 Comp = "Always",
                 Pass = "Replace",
             }) },
@@ -395,13 +394,11 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
         public static RenderStateCollection PBRGBuffer = new RenderStateCollection
         {
             { RenderState.Cull(Cull.Off), new FieldCondition(Fields.DoubleSided, true) },
-            { RenderState.ZTest(ZTest.Equal), new FieldCondition[] { 
-                new FieldCondition(Fields.SurfaceOpaque, true), 
-                new FieldCondition(Fields.AlphaTest, true) } },
+            { RenderState.ZTest(ZTest.Equal) },
             { RenderState.Stencil(new StencilDescriptor()
             {
-                WriteMask = $"{(int)HDRenderPipeline.StencilBitMask.LightingMask | (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer}",
-                Ref = $"{(int)StencilLightingUsage.RegularLighting}",
+                WriteMask = $"{ 0 | (int)StencilUsage.RequiresDeferredLighting | (int)StencilUsage.SubsurfaceScattering | (int)StencilUsage.TraceReflectionRay}",
+                Ref = $"{0 | (int)StencilUsage.RequiresDeferredLighting | (int)StencilUsage.TraceReflectionRay}",
                 Comp = "Always",
                 Pass = "Replace",
             }) },
@@ -472,8 +469,8 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             { RenderState.ZTest(ZTest.LEqual), new FieldCondition(HDFields.DistortionDepthTest, true) },
             { RenderState.Stencil(new StencilDescriptor()
             {
-                WriteMask = $"{(int)HDRenderPipeline.StencilBitMask.DistortionVectors}",
-                Ref = $"{(int)HDRenderPipeline.StencilBitMask.DistortionVectors}",
+                WriteMask = $"{(int)StencilUsage.DistortionVectors}",
+                Ref = $"{(int)StencilUsage.DistortionVectors}",
                 Comp = "Always",
                 Pass = "Replace",
             }) },
@@ -514,8 +511,8 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             { RenderState.ColorMask(s_DecalColorMasks[4]) },
             { RenderState.Stencil(new StencilDescriptor()
             {
-                WriteMask = ((int)HDRenderPipeline.StencilBitMask.Decals).ToString(),
-                Ref = ((int)HDRenderPipeline.StencilBitMask.Decals).ToString(),
+                WriteMask = ((int)StencilUsage.Decals).ToString(),
+                Ref = ((int)StencilUsage.Decals).ToString(),
                 Comp = "Always",
                 Pass = "Replace",
             }) },
@@ -529,8 +526,8 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             { RenderState.ZWrite(ZWrite.Off) },
             { RenderState.Stencil(new StencilDescriptor()
             {
-                WriteMask = ((int)HDRenderPipeline.StencilBitMask.Decals).ToString(),
-                Ref = ((int)HDRenderPipeline.StencilBitMask.Decals).ToString(),
+                WriteMask = ((int)StencilUsage.Decals).ToString(),
+                Ref = ((int)StencilUsage.Decals).ToString(),
                 Comp = "Always",
                 Pass = "Replace",
             }) },
@@ -586,8 +583,8 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             { RenderState.ColorMask(s_DecalColorMasks[4]) },
             { RenderState.Stencil(new StencilDescriptor()
             {
-                WriteMask = ((int)HDRenderPipeline.StencilBitMask.Decals).ToString(),
-                Ref = ((int)HDRenderPipeline.StencilBitMask.Decals).ToString(),
+                WriteMask = ((int)StencilUsage.Decals).ToString(),
+                Ref = ((int)StencilUsage.Decals).ToString(),
                 Comp = "Always",
                 Pass = "Replace",
             }) },
@@ -600,8 +597,8 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             { RenderState.ZWrite(ZWrite.Off) },
             { RenderState.Stencil(new StencilDescriptor()
             {
-                WriteMask = ((int)HDRenderPipeline.StencilBitMask.Decals).ToString(),
-                Ref = ((int)HDRenderPipeline.StencilBitMask.Decals).ToString(),
+                WriteMask = ((int)StencilUsage.Decals).ToString(),
+                Ref = ((int)StencilUsage.Decals).ToString(),
                 Comp = "Always",
                 Pass = "Replace",
             }) },

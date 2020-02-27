@@ -10,11 +10,6 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
             return $"{HDUtils.GetHDRenderPipelinePath()}Editor/Material/{materialName}/ShaderGraph/{materialName}Pass.template";
         }
 
-        static string GetRaytracingPassTemplatePath(string materialName)
-        {
-            return $"{HDUtils.GetHDRenderPipelinePath()}Editor/Material/{materialName}/ShaderGraph/{materialName}RaytracingPass.template";
-        }
-
         static class HDStructCollections
         {
             public static StructCollection Default = new StructCollection
@@ -373,11 +368,11 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
 
                 // Collections
                 structs = HDStructCollections.Default,
-                requiredFields = HDRequiredFields.Meta,
+                requiredFields = new FieldCollection(){ HDRequiredFields.Meta, HDFields.SubShader.Unlit },
                 fieldDependencies = HDFieldDependencies.Default,
                 renderStates = HDRenderStates.Meta,
                 pragmas = HDPragmas.Instanced,
-                keywords = HDKeywords.TransparentBlend,
+                keywords = HDKeywords.HDBase,
                 includes = HDIncludes.UnlitMeta,
 
                 // Custom Template
@@ -398,10 +393,11 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
 
                 // Collections
                 structs = HDStructCollections.Default,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Unlit },
                 fieldDependencies = HDFieldDependencies.Default,
                 renderStates = HDRenderStates.HDShadowCaster,
                 pragmas = HDPragmas.Instanced,
-                keywords = HDKeywords.TransparentBlend,
+                keywords = HDKeywords.HDBase,
                 includes = HDIncludes.UnlitDepthOnly,
 
                 // Custom Template
@@ -422,11 +418,12 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
 
                 // Collections
                 structs = HDStructCollections.Default,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Unlit },
                 fieldDependencies = HDFieldDependencies.Default,
                 renderStates = HDRenderStates.HDUnlitSceneSelection,
                 pragmas = HDPragmas.InstancedEditorSync,
                 defines = HDDefines.SceneSelection,
-                keywords = HDKeywords.TransparentBlend,
+                keywords = HDKeywords.HDBase,
                 includes = HDIncludes.UnlitDepthOnly,
 
                 // Custom Template
@@ -447,6 +444,7 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
 
                 // Collections
                 structs = HDStructCollections.Default,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Unlit },
                 fieldDependencies = HDFieldDependencies.Default,
                 renderStates = HDRenderStates.HDDepthForwardOnly,
                 pragmas = HDPragmas.Instanced,
@@ -471,7 +469,7 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
 
                 // Collections
                 structs = HDStructCollections.Default,
-                requiredFields = HDRequiredFields.PositionRWS,
+                requiredFields = new FieldCollection(){ HDRequiredFields.PositionRWS, HDFields.SubShader.Unlit },
                 fieldDependencies = HDFieldDependencies.Default,
                 renderStates = HDRenderStates.HDUnlitMotionVectors,
                 pragmas = HDPragmas.Instanced,
@@ -496,10 +494,11 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
 
                 // Collections
                 structs = HDStructCollections.Default,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Unlit },
                 fieldDependencies = HDFieldDependencies.Default,
                 renderStates = HDRenderStates.HDUnlitDistortion,
                 pragmas = HDPragmas.Instanced,
-                keywords = HDKeywords.TransparentBlend,
+                keywords = HDKeywords.HDBase,
                 includes = HDIncludes.UnlitDistortion,
 
                 // Custom Template
@@ -520,6 +519,7 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
 
                 // Collections
                 structs = HDStructCollections.Default,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Unlit },
                 fieldDependencies = HDFieldDependencies.Default,
                 renderStates = HDRenderStates.HDUnlitForward,
                 pragmas = HDPragmas.Instanced,
@@ -1728,10 +1728,11 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 pragmas = HDPragmas.RaytracingInstanced,
                 defines = HDDefines.HDLitRaytracingForwardIndirect,
                 keywords = HDKeywords.RaytracingIndirect,
-                includes = HDIncludes.HDLitRaytracingIndirect,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Lit, HDFields.ShaderPass.RaytracingIndirect },
 
                 // Custom Template
-                passTemplatePath = GetRaytracingPassTemplatePath("Lit"),
+                passTemplatePath = GetPassTemplatePath("Lit"),
             };
 
             public static PassDescriptor Visibility = new PassDescriptor()
@@ -1751,10 +1752,11 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 fieldDependencies = HDFieldDependencies.Default,
                 pragmas = HDPragmas.RaytracingInstanced,
                 defines = HDDefines.HDLitRaytracingVisibility,
-                includes = HDIncludes.HDLitRaytracingVisibility,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Lit, HDFields.ShaderPass.RaytracingVisibility },
 
                 // Custom Template
-                passTemplatePath = GetRaytracingPassTemplatePath("Lit"),
+                passTemplatePath = GetPassTemplatePath("Lit"),
             };
 
             public static PassDescriptor Forward = new PassDescriptor()
@@ -1775,10 +1777,11 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 pragmas = HDPragmas.RaytracingInstanced,
                 defines = HDDefines.HDLitRaytracingForwardIndirect,
                 keywords = HDKeywords.RaytracingGBufferForward,
-                includes = HDIncludes.HDLitRaytracingForward,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Lit, HDFields.ShaderPass.RaytracingForward },
 
                 // Custom Template
-                passTemplatePath = GetRaytracingPassTemplatePath("Lit"),
+                passTemplatePath = GetPassTemplatePath("Lit"),
             };
 
             public static PassDescriptor GBuffer = new PassDescriptor()
@@ -1799,10 +1802,58 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 pragmas = HDPragmas.RaytracingInstanced,
                 defines = HDDefines.HDLitRaytracingGBuffer,
                 keywords = HDKeywords.RaytracingGBufferForward,
-                includes = HDIncludes.HDLitRaytracingGBuffer,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Lit, HDFields.ShaderPass.RayTracingGBuffer },
 
                 // Custom Template
-                passTemplatePath = GetRaytracingPassTemplatePath("Lit"),
+                passTemplatePath = GetPassTemplatePath("Lit"),
+            };
+            public static PassDescriptor PathTracing = new PassDescriptor()
+            {
+                //Definition
+                displayName = "PathTracingDXR",
+                referenceName = "SHADERPASS_PATH_TRACING",
+                lightMode = "PathTracingDXR",
+                useInPreview = false,
+
+                //Port mask
+                vertexPorts = HDPortMasks.Vertex.HDLitDefault,
+                pixelPorts = HDPortMasks.Pixel.HDLitDefault,
+
+                //Collections
+                structs = HDStructCollections.Default,
+                fieldDependencies = HDFieldDependencies.Default,
+                pragmas = HDPragmas.RaytracingInstanced,
+                defines = HDDefines.HDLitRaytracingPathTracing,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Lit, HDFields.ShaderPass.RaytracingPathTracing },
+
+                //Custom Template
+                passTemplatePath = GetPassTemplatePath("Lit"),
+            };
+            public static PassDescriptor SubSurface = new PassDescriptor()
+            {
+                //Definition
+                displayName = "SubSurfaceDXR",
+                referenceName = "SHADERPASS_RAYTRACING_SUB_SURFACE",
+                lightMode = "SubSurfaceDXR",
+                useInPreview = false,
+
+                //Port mask
+                vertexPorts = HDPortMasks.Vertex.HDLitDefault,
+                pixelPorts = HDPortMasks.Pixel.HDLitDefault,
+
+                //Collections
+                structs = HDStructCollections.Default,
+                fieldDependencies = HDFieldDependencies.Default,
+                pragmas = HDPragmas.RaytracingInstanced,
+                defines = HDDefines.HDLitRaytracingGBuffer,
+                keywords = HDKeywords.RaytracingGBufferForward,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Lit, HDFields.ShaderPass.RaytracingSubSurface },
+
+                //Custom Template
+                passTemplatePath = GetPassTemplatePath("Lit"),
             };
         }
 #endregion
@@ -1826,11 +1877,12 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 structs = HDStructCollections.Default,
                 fieldDependencies = HDFieldDependencies.Default,
                 pragmas = HDPragmas.RaytracingBasic,
-                keywords = HDKeywords.RaytracingBasic,
-                includes = HDIncludes.HDUnlitRaytracingIndirect,
+                keywords = HDKeywords.HDBase,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Unlit, HDFields.ShaderPass.RaytracingIndirect },
 
                 // Custom Template
-                passTemplatePath = $"{HDUtils.GetHDRenderPipelinePath()}Editor/Material/Unlit/ShaderGraph/HDUnlitRaytracingPass.template",
+                passTemplatePath = GetPassTemplatePath("Unlit"),
             };
 
             public static PassDescriptor Visibility = new PassDescriptor()
@@ -1849,11 +1901,12 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 structs = HDStructCollections.Default,
                 fieldDependencies = HDFieldDependencies.Default,
                 pragmas = HDPragmas.RaytracingBasic,
-                keywords = HDKeywords.RaytracingBasic,
-                includes = HDIncludes.HDUnlitRaytracingVisibility,
+                keywords = HDKeywords.HDBase,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Unlit, HDFields.ShaderPass.RaytracingVisibility },
 
                 // Custom Template
-                passTemplatePath = $"{HDUtils.GetHDRenderPipelinePath()}Editor/Material/Unlit/ShaderGraph/HDUnlitRaytracingPass.template",
+                passTemplatePath = GetPassTemplatePath("Unlit"),
             };
 
             public static PassDescriptor Forward = new PassDescriptor()
@@ -1872,11 +1925,12 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 structs = HDStructCollections.Default,
                 fieldDependencies = HDFieldDependencies.Default,
                 pragmas = HDPragmas.RaytracingBasic,
-                keywords = HDKeywords.RaytracingBasic,
-                includes = HDIncludes.HDUnlitRaytracingForward,
+                keywords = HDKeywords.HDBase,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Unlit, HDFields.ShaderPass.RaytracingForward },
 
                 // Custom Template
-                passTemplatePath = $"{HDUtils.GetHDRenderPipelinePath()}Editor/Material/Unlit/ShaderGraph/HDUnlitRaytracingPass.template",
+                passTemplatePath = GetPassTemplatePath("Unlit"),
             };
 
             public static PassDescriptor GBuffer = new PassDescriptor()
@@ -1895,11 +1949,12 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 structs = HDStructCollections.Default,
                 fieldDependencies = HDFieldDependencies.Default,
                 pragmas = HDPragmas.RaytracingBasic,
-                keywords = HDKeywords.RaytracingBasic,
-                includes = HDIncludes.HDUnlitRaytracingGBuffer,
+                keywords = HDKeywords.HDBase,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Unlit, HDFields.ShaderPass.RayTracingGBuffer },
 
                 // Custom Template
-                passTemplatePath = $"{HDUtils.GetHDRenderPipelinePath()}Editor/Material/Unlit/ShaderGraph/HDUnlitRaytracingPass.template",
+                passTemplatePath = GetPassTemplatePath("Unlit"),
             };
         }
 #endregion
@@ -1925,10 +1980,11 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 pragmas = HDPragmas.RaytracingInstanced,
                 defines = HDDefines.FabricRaytracingForwardIndirect,
                 keywords = HDKeywords.RaytracingIndirect,
-                includes = HDIncludes.FabricRaytracingIndirect,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Fabric, HDFields.ShaderPass.RaytracingIndirect },
 
                 // Custom Template
-                passTemplatePath = GetRaytracingPassTemplatePath("Fabric"),
+                passTemplatePath = GetPassTemplatePath("Fabric"),
             };
 
             public static PassDescriptor Visibility = new PassDescriptor()
@@ -1947,11 +2003,12 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 structs = HDStructCollections.Default,
                 fieldDependencies = HDFieldDependencies.Default,
                 pragmas = HDPragmas.RaytracingInstanced,
-                keywords = HDKeywords.RaytracingBasic,
-                includes = HDIncludes.FabricRaytracingVisibility,
+                keywords = HDKeywords.HDBase,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Fabric, HDFields.ShaderPass.RaytracingVisibility },
 
                 // Custom Template
-                passTemplatePath = GetRaytracingPassTemplatePath("Fabric"),
+                passTemplatePath = GetPassTemplatePath("Fabric"),
             };
 
             public static PassDescriptor Forward = new PassDescriptor()
@@ -1972,10 +2029,11 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 pragmas = HDPragmas.RaytracingInstanced,
                 defines = HDDefines.FabricRaytracingForwardIndirect,
                 keywords = HDKeywords.RaytracingGBufferForward,
-                includes = HDIncludes.FabricRaytracingForward,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Fabric, HDFields.ShaderPass.RaytracingForward },
 
                 // Custom Template
-                passTemplatePath = GetRaytracingPassTemplatePath("Fabric"),
+                passTemplatePath = GetPassTemplatePath("Fabric"),
             };
 
             public static PassDescriptor GBuffer = new PassDescriptor()
@@ -1996,10 +2054,35 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 pragmas = HDPragmas.RaytracingInstanced,
                 defines = HDDefines.FabricRaytracingGBuffer,
                 keywords = HDKeywords.RaytracingGBufferForward,
-                includes = HDIncludes.FabricRaytracingGBuffer,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Fabric, HDFields.ShaderPass.RayTracingGBuffer },
 
                 // Custom Template
-                passTemplatePath = GetRaytracingPassTemplatePath("Fabric"),
+                passTemplatePath = GetPassTemplatePath("Fabric"),
+            };
+            public static PassDescriptor SubSurface = new PassDescriptor()
+            {
+                //Definition
+                displayName = "SubSurfaceDXR",
+                referenceName = "SHADERPASS_RAYTRACING_SUB_SURFACE",
+                lightMode = "SubSurfaceDXR",
+                useInPreview = false,
+
+                //Port mask
+                vertexPorts = HDPortMasks.Vertex.HDLitDefault,
+                pixelPorts = HDPortMasks.Pixel.HDLitDefault,
+
+                //Collections
+                structs = HDStructCollections.Default,
+                fieldDependencies = HDFieldDependencies.Default,
+                pragmas = HDPragmas.RaytracingInstanced,
+                defines = HDDefines.FabricRaytracingGBuffer,
+                keywords = HDKeywords.RaytracingGBufferForward,
+                includes = HDIncludes.Raytracing,
+                requiredFields = new FieldCollection(){ HDFields.SubShader.Fabric, HDFields.ShaderPass.RaytracingSubSurface },
+
+                //Custom Template
+                passTemplatePath = GetPassTemplatePath("Fabric"),
             };
         }
 #endregion

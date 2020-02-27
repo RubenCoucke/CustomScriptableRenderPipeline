@@ -22,7 +22,7 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
                 "TEXCOORD3", subscriptOptions : StructFieldOptions.Optional);
             public static FieldDescriptor weights = new FieldDescriptor(AttributesMesh.name, "weights", "ATTRIBUTES_NEED_BLENDWEIGHTS", ShaderValueType.Float4,
                 "BLENDWEIGHTS", subscriptOptions : StructFieldOptions.Optional);
-            public static FieldDescriptor indicies = new FieldDescriptor(AttributesMesh.name, "indicies", "ATTRIBUTES_NEED_BLENDINDICES", ShaderValueType.Uint4,
+            public static FieldDescriptor indices = new FieldDescriptor(AttributesMesh.name, "indices", "ATTRIBUTES_NEED_BLENDINDICES", ShaderValueType.Uint4,
                 "BLENDINDICES", subscriptOptions : StructFieldOptions.Optional);
             public static FieldDescriptor color = new FieldDescriptor(AttributesMesh.name, "color", "ATTRIBUTES_NEED_COLOR", ShaderValueType.Float4,
                 "COLOR", subscriptOptions : StructFieldOptions.Optional);
@@ -33,7 +33,7 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
         public struct VaryingsMeshToPS
         {
             public static string name = "VaryingsMeshToPS";
-            public static FieldDescriptor positionCS = new FieldDescriptor(VaryingsMeshToPS.name, "positionCS", "", ShaderValueType.Float4, "Sv_Position");
+            public static FieldDescriptor positionCS = new FieldDescriptor(VaryingsMeshToPS.name, "positionCS", "", ShaderValueType.Float4, "SV_POSITION");
             public static FieldDescriptor positionRWS = new FieldDescriptor(VaryingsMeshToPS.name, "positionRWS", "VARYINGS_NEED_POSITION_WS", ShaderValueType.Float3,
                 subscriptOptions : StructFieldOptions.Optional);
             public static FieldDescriptor normalWS = new FieldDescriptor(VaryingsMeshToPS.name, "normalWS", "VARYINGS_NEED_NORMAL_WS", ShaderValueType.Float3,

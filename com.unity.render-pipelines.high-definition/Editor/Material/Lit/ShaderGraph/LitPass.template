@@ -34,8 +34,6 @@ Pass
     $BlendMode.Alpha:                   #define _BLENDMODE_ALPHA 1
     $BlendMode.Add:                     #define _BLENDMODE_ADD 1
     $BlendMode.Premultiply:             #define _BLENDMODE_PRE_MULTIPLY 1
-    $AlphaTest:                         #define _ALPHATEST 1
-    $AlphaFog:                          #define _ENABLE_FOG_ON_TRANSPARENT 1
     $AmbientOcclusion:                  #define _AMBIENT_OCCLUSION 1
     $SpecularOcclusionFromAO:           #define _SPECULAR_OCCLUSION_FROM_AO 1
     $SpecularOcclusionFromAOBentNormal: #define _SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL 1
@@ -51,6 +49,9 @@ Pass
     $TransparentWritesMotionVec:        #define _WRITE_TRANSPARENT_MOTION_VECTOR 1
     $DepthOffset:                       #define _DEPTHOFFSET_ON 1
     $BlendMode.PreserveSpecular:        #define _BLENDMODE_PRESERVE_SPECULAR_LIGHTING 1
+    $NormalDropOffTS:                   #define _NORMAL_DROPOFF_TS 1
+    $NormalDropOffOS:                   #define _NORMAL_DROPOFF_OS 1
+    $NormalDropOffWS:                   #define _NORMAL_DROPOFF_WS 1
     $AttributesMesh.normalOS:           #define ATTRIBUTES_NEED_NORMAL
     $AttributesMesh.tangentOS:          #define ATTRIBUTES_NEED_TANGENT
     $AttributesMesh.uv0:                #define ATTRIBUTES_NEED_TEXCOORD0
@@ -219,12 +220,18 @@ Pass
             float3 doubleSidedConstants = float3(1.0, 1.0, 1.0);
         #endif
 
-        // tangent-space normal
-        float3 normalTS = float3(0.0f, 0.0f, 1.0f);
-        $SurfaceDescription.Normal: normalTS = surfaceDescription.Normal;
+        // normal delivered to master node
+        float3 normalSrc = float3(0.0f, 0.0f, 1.0f);
+        $SurfaceDescription.Normal: normalSrc = surfaceDescription.Normal;
 
         // compute world space normal
-        GetNormalWS(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
+        #if _NORMAL_DROPOFF_TS
+            GetNormalWS(fragInputs, normalSrc, surfaceData.normalWS, doubleSidedConstants);
+        #elif _NORMAL_DROPOFF_OS
+            surfaceData.normalWS = TransformObjectToWorldNormal(normalSrc);
+        #elif _NORMAL_DROPOFF_WS
+            surfaceData.normalWS = normalSrc;
+        #endif
 
         surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
 
@@ -293,10 +300,12 @@ Pass
 
         // Perform alpha test very early to save performance (a killed pixel will not sample textures)
         // TODO: split graph evaluation to grab just alpha dependencies first? tricky..
-        $AlphaTest:         DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold);
-        $AlphaTestPrepass:  DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdDepthPrepass);
-        $AlphaTestPostpass: DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdDepthPostpass);
-        $AlphaTestShadow:   DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow);
+        #ifdef _ALPHATEST_ON
+            $AlphaTest:         GENERIC_ALPHA_TEST(surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold);
+            $AlphaTestPrepass:  GENERIC_ALPHA_TEST(surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdDepthPrepass);
+            $AlphaTestPostpass: GENERIC_ALPHA_TEST(surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdDepthPostpass);
+            $AlphaTestShadow:   GENERIC_ALPHA_TEST(surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow);
+        #endif
         
         $DepthOffset: ApplyDepthOffsetPositionInput(V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput);
 

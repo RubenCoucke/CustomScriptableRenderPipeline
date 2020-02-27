@@ -22,7 +22,7 @@ using static UnityEngine.Rendering.HighDefinition.HDMaterialProperties;
 namespace UnityEditor.Rendering.HighDefinition
 {
     [Serializable]
-    [Title("Master", "HDRP/StackLit")]
+    [Title("Master", "StackLit (HDRP)")]
     [FormerName("UnityEditor.Experimental.Rendering.HDPipeline.StackLitMasterNode")]
     [FormerName("UnityEditor.ShaderGraph.StackLitMasterNode")]
     class StackLitMasterNode : AbstractMaterialNode, IMasterNode, IHasSettings, IMayRequirePosition, IMayRequireNormal, IMayRequireTangent
@@ -39,9 +39,11 @@ namespace UnityEditor.Rendering.HighDefinition
         public const string SubsurfaceMaskSlotName = "SubsurfaceMask";
         public const string ThicknessSlotName = "Thickness";
         public const string DiffusionProfileHashSlotName = "DiffusionProfileHash";
+        public const string DiffusionProfileHashSlotDisplayName = "Diffusion Profile";
 
         public const string IridescenceMaskSlotName = "IridescenceMask";
         public const string IridescenceThicknessSlotName = "IridescenceThickness";
+        public const string IridescenceThicknessSlotDisplayName = "Iridescence Layer Thickness";
         public const string IridescenceCoatFixupTIRSlotName = "IridescenceCoatFixupTIR";
         public const string IridescenceCoatFixupTIRClampSlotName = "IridescenceCoatFixupTIRClamp";
 
@@ -60,6 +62,7 @@ namespace UnityEditor.Rendering.HighDefinition
         public const string SpecularAAScreenSpaceVarianceSlotName = "SpecularAAScreenSpaceVariance";
         public const string SpecularAAThresholdSlotName = "SpecularAAThreshold";
         public const string DistortionSlotName = "Distortion";
+        public const string DistortionSlotDisplayName = "Distortion Vector";
         public const string DistortionBlurSlotName = "DistortionBlur";
 
         public const string CoatSmoothnessSlotName = "CoatSmoothness";
@@ -385,7 +388,23 @@ namespace UnityEditor.Rendering.HighDefinition
                     return;
 
                 m_DoubleSidedMode = value;
-                Dirty(ModificationScope.Graph);
+                Dirty(ModificationScope.Topological);
+            }
+        }
+
+        [SerializeField]
+        NormalDropOffSpace m_NormalDropOffSpace;
+        public NormalDropOffSpace normalDropOffSpace
+        {
+            get { return m_NormalDropOffSpace; }
+            set
+            {
+                if (m_NormalDropOffSpace == value)
+                    return;
+
+                m_NormalDropOffSpace = value;
+                UpdateNodeAfterDeserialization();
+                Dirty(ModificationScope.Topological);
             }
         }
 
@@ -958,6 +977,35 @@ namespace UnityEditor.Rendering.HighDefinition
                 Dirty(ModificationScope.Node);
             }
         }
+        [SerializeField]
+        bool m_DOTSInstancing = false;
+
+        public ToggleData dotsInstancing
+        {
+            get { return new ToggleData(m_DOTSInstancing); }
+            set
+            {
+                if (m_DOTSInstancing == value.isOn)
+                    return;
+
+                m_DOTSInstancing = value.isOn;
+                Dirty(ModificationScope.Graph);
+            }
+        }
+
+        [SerializeField]
+        int m_MaterialNeedsUpdateHash = 0;
+
+        int ComputeMaterialNeedsUpdateHash()
+        {
+            int hash = 0;
+
+            hash |= (alphaTest.isOn ? 0 : 1) << 0;
+            hash |= (receiveSSR.isOn ? 0 : 1) << 2;
+            hash |= (RequiresSplitLighting() ? 0 : 1) << 3;
+
+            return hash;
+        }
 
         public StackLitMasterNode()
         {
@@ -1014,7 +1062,21 @@ namespace UnityEditor.Rendering.HighDefinition
             AddSlot(new TangentMaterialSlot(VertexTangentSlotId, VertexTangentSlotName, VertexTangentSlotName, CoordinateSpace.Object, ShaderStageCapability.Vertex));
             validSlots.Add(VertexTangentSlotId);
 
-            AddSlot(new NormalMaterialSlot(NormalSlotId, NormalSlotName, NormalSlotName, CoordinateSpace.Tangent, ShaderStageCapability.Fragment));
+            RemoveSlot(NormalSlotId);                
+            var coordSpace = CoordinateSpace.Tangent;
+            switch (m_NormalDropOffSpace)
+            {
+                case NormalDropOffSpace.Tangent:
+                    coordSpace = CoordinateSpace.Tangent;
+                    break;
+                case NormalDropOffSpace.World:
+                    coordSpace = CoordinateSpace.World;
+                    break;
+                case NormalDropOffSpace.Object:
+                    coordSpace = CoordinateSpace.Object;
+                    break;
+            }
+            AddSlot(new NormalMaterialSlot(NormalSlotId, NormalSlotName, NormalSlotName, coordSpace, ShaderStageCapability.Fragment));
             validSlots.Add(NormalSlotId);
 
             AddSlot(new NormalMaterialSlot(BentNormalSlotId, BentNormalSlotName, BentNormalSlotName, CoordinateSpace.Tangent, ShaderStageCapability.Fragment));
@@ -1127,7 +1189,7 @@ namespace UnityEditor.Rendering.HighDefinition
             {
                 AddSlot(new Vector1MaterialSlot(IridescenceMaskSlotId, IridescenceMaskSlotName, IridescenceMaskSlotName, SlotType.Input, 1.0f, ShaderStageCapability.Fragment));
                 validSlots.Add(IridescenceMaskSlotId);
-                AddSlot(new Vector1MaterialSlot(IridescenceThicknessSlotId, IridescenceThicknessSlotName, IridescenceThicknessSlotName, SlotType.Input, 0.0f, ShaderStageCapability.Fragment));
+                AddSlot(new Vector1MaterialSlot(IridescenceThicknessSlotId, IridescenceThicknessSlotDisplayName, IridescenceThicknessSlotName, SlotType.Input, 0.0f, ShaderStageCapability.Fragment));
                 validSlots.Add(IridescenceThicknessSlotId);
                 if (coat.isOn)
                 {
@@ -1152,7 +1214,7 @@ namespace UnityEditor.Rendering.HighDefinition
 
             if (subsurfaceScattering.isOn || transmission.isOn)
             {
-                AddSlot(new DiffusionProfileInputMaterialSlot(DiffusionProfileHashSlotId, DiffusionProfileHashSlotName, DiffusionProfileHashSlotName, ShaderStageCapability.Fragment));
+                AddSlot(new DiffusionProfileInputMaterialSlot(DiffusionProfileHashSlotId, DiffusionProfileHashSlotDisplayName, DiffusionProfileHashSlotName, ShaderStageCapability.Fragment));
                 validSlots.Add(DiffusionProfileHashSlotId);
             }
 
@@ -1170,7 +1232,7 @@ namespace UnityEditor.Rendering.HighDefinition
 
             if (HasDistortion())
             {
-                AddSlot(new Vector2MaterialSlot(DistortionSlotId, DistortionSlotName, DistortionSlotName, SlotType.Input, new Vector2(2.0f, -1.0f), ShaderStageCapability.Fragment));
+                AddSlot(new Vector2MaterialSlot(DistortionSlotId, DistortionSlotDisplayName, DistortionSlotName, SlotType.Input, new Vector2(2.0f, -1.0f), ShaderStageCapability.Fragment));
                 validSlots.Add(DistortionSlotId);
 
                 AddSlot(new Vector1MaterialSlot(DistortionBlurSlotId, DistortionBlurSlotName, DistortionBlurSlotName, SlotType.Input, 1.0f, ShaderStageCapability.Fragment));
@@ -1376,6 +1438,11 @@ namespace UnityEditor.Rendering.HighDefinition
                 new ConditionalField(HDFields.Transmission,                 transmission.isOn),
                 new ConditionalField(HDFields.DualSpecularLobe,             dualSpecularLobe.isOn),
 
+                // Normal Drop Off Space
+                new ConditionalField(Fields.NormalDropOffOS,                normalDropOffSpace == NormalDropOffSpace.Object),
+                new ConditionalField(Fields.NormalDropOffTS,                normalDropOffSpace == NormalDropOffSpace.Tangent),
+                new ConditionalField(Fields.NormalDropOffWS,                normalDropOffSpace == NormalDropOffSpace.World),
+
                 // Distortion
                 new ConditionalField(HDFields.TransparentDistortion,        surfaceType != SurfaceType.Opaque && distortion.isOn),
 
@@ -1414,7 +1481,8 @@ namespace UnityEditor.Rendering.HighDefinition
                 // if capHazinessWrtMetallic.isOn.
                 new ConditionalField(HDFields.CapHazinessIfNotMetallic,     dualSpecularLobe.isOn && 
                                                                                 dualSpecularLobeParametrization == StackLit.DualSpecularLobeParametrization.HazyGloss &&
-                                                                                capHazinessWrtMetallic.isOn && pass.pixelPorts.Contains(HazyGlossMaxDielectricF0SlotId)),
+                                                                                capHazinessWrtMetallic.isOn && baseParametrization == StackLit.BaseParametrization.BaseMetallic
+                                                                                && pass.pixelPorts.Contains(HazyGlossMaxDielectricF0SlotId)),
                 // Note here we combine an "enable"-like predicate and the $SurfaceDescription.(slotname) predicate
                 // into a single $GeometricSpecularAA pedicate.
                 //
@@ -1570,6 +1638,21 @@ namespace UnityEditor.Rendering.HighDefinition
             return subsurfaceScattering.isOn;
         }
 
+        public override object saveContext
+        {
+            get
+            {
+                int hash = ComputeMaterialNeedsUpdateHash();
+
+                bool needsUpdate = hash != m_MaterialNeedsUpdateHash;
+
+                if (needsUpdate)
+                    m_MaterialNeedsUpdateHash = hash;
+
+                return new HDSaveContext{ updateMaterials = needsUpdate };
+            }
+        }
+
         public override void CollectShaderProperties(PropertyCollector collector, GenerationMode generationMode)
         {
             if (debug.isOn)
@@ -1647,7 +1730,8 @@ namespace UnityEditor.Rendering.HighDefinition
                 zWrite.isOn,
                 transparentCullMode,
                 zTest,
-                false
+                false,
+                transparencyFog.isOn
             );
             HDSubShaderUtilities.AddAlphaCutoffShaderProperties(collector, alphaTest.isOn, false);
             HDSubShaderUtilities.AddDoubleSidedProperty(collector, doubleSidedMode);

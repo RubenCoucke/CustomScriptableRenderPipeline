@@ -110,6 +110,38 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
+        [SerializeField]
+        NormalDropOffSpace m_NormalDropOffSpace;
+        public NormalDropOffSpace normalDropOffSpace
+        {
+            get { return m_NormalDropOffSpace; }
+            set
+            {
+                if (m_NormalDropOffSpace == value)
+                    return;
+
+                m_NormalDropOffSpace = value;
+                UpdateNodeAfterDeserialization();
+                Dirty(ModificationScope.Topological);
+            }
+        }
+
+        [SerializeField]
+        bool m_DOTSInstancing = false;
+
+        public ToggleData dotsInstancing
+        {
+            get { return new ToggleData(m_DOTSInstancing); }
+            set
+            {
+                if (m_DOTSInstancing == value.isOn)
+                    return;
+
+                m_DOTSInstancing = value.isOn;
+                Dirty(ModificationScope.Graph);
+            }
+        }
+
         public PBRMasterNode()
         {
             UpdateNodeAfterDeserialization();
@@ -124,7 +156,22 @@ namespace UnityEditor.ShaderGraph
             AddSlot(new NormalMaterialSlot(VertNormalSlotId, NormalName, NormalName, CoordinateSpace.Object, ShaderStageCapability.Vertex));
             AddSlot(new TangentMaterialSlot(VertTangentSlotId, TangentName, TangentName, CoordinateSpace.Object, ShaderStageCapability.Vertex));
             AddSlot(new ColorRGBMaterialSlot(AlbedoSlotId, AlbedoSlotName, AlbedoSlotName, SlotType.Input, Color.grey.gamma, ColorMode.Default, ShaderStageCapability.Fragment));
-            AddSlot(new NormalMaterialSlot(NormalSlotId, NormalSlotName, NormalSlotName, CoordinateSpace.Tangent, ShaderStageCapability.Fragment));
+            //switch drop off delivery space for normal values
+            var coordSpace = CoordinateSpace.Tangent;
+            switch (m_NormalDropOffSpace)
+            {
+                case NormalDropOffSpace.Tangent:
+                    coordSpace = CoordinateSpace.Tangent;
+                    break;
+                case NormalDropOffSpace.World:
+                    coordSpace = CoordinateSpace.World;
+                    break;
+                case NormalDropOffSpace.Object:
+                    coordSpace = CoordinateSpace.Object;
+                    break;
+            }
+            RemoveSlot(NormalSlotId);
+            AddSlot(new NormalMaterialSlot(NormalSlotId, NormalSlotName, NormalSlotName, coordSpace, ShaderStageCapability.Fragment));
             AddSlot(new ColorRGBMaterialSlot(EmissionSlotId, EmissionSlotName, EmissionSlotName, SlotType.Input, Color.black, ColorMode.Default, ShaderStageCapability.Fragment));
             if (model == Model.Metallic)
                 AddSlot(new Vector1MaterialSlot(MetallicSlotId, MetallicSlotName, MetallicSlotName, SlotType.Input, 0, ShaderStageCapability.Fragment));
@@ -133,7 +180,7 @@ namespace UnityEditor.ShaderGraph
             AddSlot(new Vector1MaterialSlot(SmoothnessSlotId, SmoothnessSlotName, SmoothnessSlotName, SlotType.Input, 0.5f, ShaderStageCapability.Fragment));
             AddSlot(new Vector1MaterialSlot(OcclusionSlotId, OcclusionSlotName, OcclusionSlotName, SlotType.Input, 1f, ShaderStageCapability.Fragment));
             AddSlot(new Vector1MaterialSlot(AlphaSlotId, AlphaSlotName, AlphaSlotName, SlotType.Input, 1f, ShaderStageCapability.Fragment));
-            AddSlot(new Vector1MaterialSlot(AlphaThresholdSlotId, AlphaClipThresholdSlotName, AlphaClipThresholdSlotName, SlotType.Input, 0.5f, ShaderStageCapability.Fragment));
+            AddSlot(new Vector1MaterialSlot(AlphaThresholdSlotId, AlphaClipThresholdSlotName, AlphaClipThresholdSlotName, SlotType.Input, 0.0f, ShaderStageCapability.Fragment));
 
             // clear out slot names that do not match the slots
             // we support
@@ -202,6 +249,11 @@ namespace UnityEditor.ShaderGraph
                 new ConditionalField(Fields.BlendAlpha,          surfaceType != ShaderGraph.SurfaceType.Opaque && alphaMode == AlphaMode.Alpha),
                 new ConditionalField(Fields.BlendMultiply,       surfaceType != ShaderGraph.SurfaceType.Opaque && alphaMode == AlphaMode.Multiply),
                 new ConditionalField(Fields.BlendPremultiply,    surfaceType != ShaderGraph.SurfaceType.Opaque && alphaMode == AlphaMode.Premultiply),
+
+                // Normal Drop Off Space
+                new ConditionalField(Fields.NormalDropOffOS,     normalDropOffSpace == NormalDropOffSpace.Object),
+                new ConditionalField(Fields.NormalDropOffTS,     normalDropOffSpace == NormalDropOffSpace.Tangent),
+                new ConditionalField(Fields.NormalDropOffWS,     normalDropOffSpace == NormalDropOffSpace.World),
 
                 // Misc
                 new ConditionalField(Fields.AlphaClip,           IsSlotConnected(UnlitMasterNode.AlphaThresholdSlotId) ||
