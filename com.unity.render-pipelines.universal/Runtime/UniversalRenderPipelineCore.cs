@@ -29,7 +29,6 @@ namespace UnityEngine.Rendering.Universal
         /// True if post-processing effect is enabled while rendering the camera stack.
         /// </summary>
         public bool postProcessingEnabled;
-        internal bool resolveFinalTarget;
     }
 
     [MovedFrom("UnityEngine.Rendering.LWRP")] public struct LightData
@@ -44,14 +43,49 @@ namespace UnityEngine.Rendering.Universal
 
     [MovedFrom("UnityEngine.Rendering.LWRP")] public struct CameraData
     {
+        // Internal camera data as we are not yet sure how to expose View in stereo context.
+        // We might change this API soon.
+        Matrix4x4 m_ViewMatrix;
+        Matrix4x4 m_ProjectionMatrix;
+
+        internal void SetViewAndProjectionMatrix(Matrix4x4 viewMatrix, Matrix4x4 projectionMatrix)
+        {
+            m_ViewMatrix = viewMatrix;
+            m_ProjectionMatrix = projectionMatrix;
+        }
+
+        /// <summary>
+        /// Returns the camera view matrix.
+        /// </summary>
+        /// <returns></returns>
+        public Matrix4x4 GetViewMatrix()
+        {
+            return m_ViewMatrix;
+        }
+
+        /// <summary>
+        /// Returns the camera projection matrix.
+        /// </summary>
+        /// <returns></returns>
+        public Matrix4x4 GetProjectionMatrix()
+        {
+            return m_ProjectionMatrix;
+        }
+
+        /// <summary>
+        /// Return the device projection matrix. This contains platform specific changes to handle y-flip and reverse z.
+        /// For more info on platform differences check: https://docs.unity3d.com/Manual/SL-PlatformDifferences.html
+        /// </summary>
+        /// <returns></returns>
+        public Matrix4x4 GetDeviceProjectionMatrix()
+        {
+            return GL.GetGPUProjectionMatrix(m_ProjectionMatrix, requiresFlip);
+        }
+
         public Camera camera;
         public CameraRenderType renderType;
         public RenderTexture targetTexture;
         public RenderTextureDescriptor cameraTargetDescriptor;
-        // Internal camera data as we are not yet sure how to expose View in stereo context.
-        // We might change this API soon.
-        internal Matrix4x4 viewMatrix;
-        internal Matrix4x4 projectionMatrix;
         internal Rect pixelRect;
         internal int pixelWidth;
         internal int pixelHeight;
@@ -63,6 +97,13 @@ namespace UnityEngine.Rendering.Universal
         public bool isHdrEnabled;
         public bool requiresDepthTexture;
         public bool requiresOpaqueTexture;
+
+        /// <summary>
+        /// True if the pipeline requires flip to handle texture coordinate correctly.
+        /// If you are implementing a custom blit passes you can use this to figure out if you should
+        /// flip texture when rendering with cmd.Draw* functions.
+        /// </summary>
+        internal bool requiresFlip;
 
         public SortingCriteria defaultOpaqueSortFlags;
 
@@ -83,6 +124,7 @@ namespace UnityEngine.Rendering.Universal
         public AntialiasingMode antialiasing;
         public AntialiasingQuality antialiasingQuality;
         internal ScriptableRenderer renderer;
+        internal bool resolveFinalTarget;
     }
 
     [MovedFrom("UnityEngine.Rendering.LWRP")] public struct ShadowData
@@ -99,6 +141,30 @@ namespace UnityEngine.Rendering.Universal
         public bool supportsSoftShadows;
         public int shadowmapDepthBufferBits;
         public List<Vector4> bias;
+    }
+
+    public static class ShaderPropertyId
+    {
+        public static readonly int scaledScreenParams = Shader.PropertyToID("_ScaledScreenParams");
+        public static readonly int worldSpaceCameraPos = Shader.PropertyToID("_WorldSpaceCameraPos");
+        public static readonly int screenParams = Shader.PropertyToID("_ScreenParams");
+        public static readonly int projectionParams = Shader.PropertyToID("_ProjectionParams");
+        public static readonly int zBufferParams = Shader.PropertyToID("_ZBufferParams");
+        public static readonly int orthoParams = Shader.PropertyToID("unity_OrthoParams");
+
+        public static readonly int viewMatrix = Shader.PropertyToID("unity_MatrixV");
+        public static readonly int projectionMatrix = Shader.PropertyToID("glstate_matrix_projection");
+        public static readonly int viewAndProjectionMatrix = Shader.PropertyToID("unity_MatrixVP");
+
+        public static readonly int inverseViewMatrix = Shader.PropertyToID("unity_MatrixInvV");
+        // Undefined: 
+        // public static readonly int inverseProjectionMatrix = Shader.PropertyToID("unity_MatrixInvP");
+        public static readonly int inverseViewAndProjectionMatrix = Shader.PropertyToID("unity_MatrixInvVP");
+
+        public static readonly int cameraProjectionMatrix = Shader.PropertyToID("unity_CameraProjection");
+        public static readonly int inverseCameraProjectionMatrix = Shader.PropertyToID("unity_CameraInvProjection");
+        public static readonly int worldToCameraMatrix = Shader.PropertyToID("unity_WorldToCamera");
+        public static readonly int cameraToWorldMatrix = Shader.PropertyToID("unity_CameraToWorld");
     }
 
     public struct PostProcessingData
@@ -128,6 +194,7 @@ namespace UnityEngine.Rendering.Universal
         public static readonly string DepthNoMsaa = "_DEPTH_NO_MSAA";
         public static readonly string DepthMsaa2 = "_DEPTH_MSAA_2";
         public static readonly string DepthMsaa4 = "_DEPTH_MSAA_4";
+        public static readonly string DepthMsaa8 = "_DEPTH_MSAA_8";
 
         public static readonly string LinearToSRGBConversion = "_LINEAR_TO_SRGB_CONVERSION";
 
